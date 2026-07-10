@@ -1,0 +1,6 @@
+# Vercel 업로드에서 제외 (로컬 전용/재생성 가능)
+.env
+.env.*
+node_modules
+.next
+docs
