@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { AdSlot } from "@/components/ui/ad-slot";
+import { AdFit } from "@/components/adfit";
 import {
   Card,
   CardContent,
@@ -164,12 +164,12 @@ export default function Home() {
 
   return (
     <>
-      {/* 좌우 세로 광고 (데스크톱 넓은 화면 전용, 본문 바깥 여백에 배치) */}
+      {/* 좌우 세로 광고 (데스크톱 넓은 화면 전용, 본문 바깥 여백에 배치) — 애드핏 PC 세로 160×600 */}
       <aside className="fixed left-6 top-1/2 hidden -translate-y-1/2 xl:block">
-        <AdSlot label="광고" className="h-[600px] w-40" />
+        <AdFit unit="DAN-ylNqNALGULFpj1lf" width={160} height={600} />
       </aside>
       <aside className="fixed right-6 top-1/2 hidden -translate-y-1/2 xl:block">
-        <AdSlot label="광고" className="h-[600px] w-40" />
+        <AdFit unit="DAN-yr976w758Na7Djmz" width={160} height={600} />
       </aside>
 
       <div className="mx-auto flex min-h-svh w-full max-w-2xl flex-col gap-8 px-5 py-12 sm:py-16">
@@ -384,8 +384,10 @@ export default function Home() {
         </>
       )}
 
-        {/* 모바일 하단 광고 (데스크톱은 좌우 세로광고를 사용하므로 숨김) */}
-        <AdSlot label="광고" className="mt-2 h-24 w-full xl:hidden" />
+        {/* 모바일 하단 광고 (데스크톱은 좌우 세로광고 사용) — 애드핏 모바일 가로 320×100 */}
+        <div className="mt-2 flex justify-center xl:hidden">
+          <AdFit unit="DAN-n3FOzavIdDMGOhMa" width={320} height={100} />
+        </div>
       </div>
     </>
   );
