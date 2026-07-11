@@ -46,7 +46,10 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         {children}
-        <Footer />
+        <Footer
+          links={[{ label: "개인정보처리방침", href: "/privacy" }]}
+          note="본 풀이는 재미·참고용입니다"
+        />
       </body>
     </html>
   );
