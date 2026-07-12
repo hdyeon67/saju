@@ -21,7 +21,7 @@ const gowun = Gowun_Dodum({
 
 export const metadata: Metadata = {
   // 공유 미리보기 이미지의 기준 주소 (커스텀 도메인 연결 시 이 값을 바꾸세요)
-  metadataBase: new URL("https://saju-one-gilt.vercel.app"),
+  metadataBase: new URL("https://saju.fineboll.com"),
   title: "사주 풀이",
   description: "생년월일로 사주팔자를 계산하고 풀이해 주는 무료 사주 사이트",
   // public/logo.png 를 파비콘·공유 미리보기에 사용 (파일 준비되면 자동 적용)
