@@ -21,6 +21,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { AdFit } from "@/components/adfit";
+import { CrossPromo } from "@/components/cross-promo";
 import {
   Card,
   CardContent,
@@ -381,6 +382,9 @@ export default function Home() {
           {saju && reading && !loading && (
             <ShareBar targetRef={resultRef} saju={saju} />
           )}
+
+          {/* 크로스 프로모션 (다른 앱 배너) */}
+          {saju && reading && !loading && <CrossPromo />}
         </>
       )}
 
