@@ -107,6 +107,20 @@ export default function Home() {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
+  // 외부(케미체크 등)에서 ?y=&m=&d=&cal= 로 들어오면 생년월일 프리필
+  // (성별·태어난 시각은 사용자가 확인 후 계산)
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const y = sp.get("y");
+    const m = sp.get("m");
+    const d = sp.get("d");
+    const cal = sp.get("cal");
+    if (cal === "lunar" || cal === "solar") setCalendar(cal);
+    if (y && /^\d{4}$/.test(y)) setYear(y);
+    if (m && Number(m) >= 1 && Number(m) <= 12) setMonth(String(Number(m)));
+    if (d && Number(d) >= 1 && Number(d) <= 31) setDay(String(Number(d)));
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     // 결과 화면으로 전환 + 뒤로가기용 히스토리 추가
