@@ -21,7 +21,8 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { AdFit } from "@/components/adfit";
-import { CrossPromo } from "@/components/cross-promo";
+import { CrossPromo, InlinePromo } from "@/components/cross-promo";
+import { promoForSection } from "@/lib/config/promos";
 import {
   Card,
   CardContent,
@@ -815,6 +816,7 @@ function Reading({ text }: { text: string }) {
 
       {sections.map((s, i) => {
         const isTime = TIME_SECTIONS.some((k) => s.title.includes(k));
+        const promo = promoForSection(s.title);
         return (
           <section
             key={i}
@@ -840,6 +842,8 @@ function Reading({ text }: { text: string }) {
                 <Paragraph key={j} text={p} />
               ))}
             </div>
+            {/* 맥락형 추천 — 관련 섹션 뒤에 자연스럽게 (이미지 캡처에선 제외) */}
+            {promo && <InlinePromo promo={promo} />}
           </section>
         );
       })}
@@ -895,6 +899,9 @@ function ShareBar({
       pixelRatio: 2,
       backgroundColor: "#15141d",
       cacheBust: true,
+      // 맥락형 추천(data-noimg)은 저장/공유 이미지에서 제외해 결과를 깔끔히 유지
+      filter: (node) =>
+        !(node instanceof HTMLElement && node.dataset.noimg === "1"),
     });
   }
 
