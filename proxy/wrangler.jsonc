@@ -1,0 +1,10 @@
+{
+  "name": "saju-ai-proxy",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-03-25",
+  "workers_dev": true,
+  "durable_objects": {
+    "bindings": [{ "name": "US_EGRESS", "class_name": "UsEgress" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["UsEgress"] }]
+}

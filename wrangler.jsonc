@@ -1,0 +1,14 @@
+{
+  "name": "saju",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-03-25",
+  "compatibility_flags": ["nodejs_compat"],
+  // Smart Placement: 워커를 백엔드(Anthropic API, 미국) 근처에서 실행 →
+  // 아웃바운드가 지원 리전에서 나가 Anthropic 지역차단(403) 회피.
+  // (홍콩 등 미지원 엣지에서 실행되면 api.anthropic.com 이 403 "Request not allowed" 반환)
+  "placement": { "mode": "smart" },
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  // AI 호출을 미국 리전 고정 프록시로 우회 (Anthropic 지역차단 회피)
+  "vars": { "AI_PROXY_URL": "https://saju-ai-proxy.hdyeon67.workers.dev" },
+  "routes": [{ "pattern": "saju.fineboll.com", "custom_domain": true }]
+}

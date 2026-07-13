@@ -1,22 +1,17 @@
 /**
- * 사주 풀이 생성 모듈 (두 가지 인증 경로 지원)
+ * 사주 풀이 생성 모듈 (Anthropic SDK 단일 경로)
  *
- * 1) 배포/서버리스(Vercel 등): 환경변수 ANTHROPIC_API_KEY 가 있으면
- *    Anthropic SDK(@anthropic-ai/sdk)로 API를 직접 호출한다. (종량 과금)
- *    → 서버리스 환경에서 안정적이고, 여러 사용자를 감당할 수 있다.
+ * - `@anthropic-ai/sdk`(fetch 기반)로 Claude Messages API를 직접 호출한다.
+ *   → Cloudflare Workers(workerd) 및 Node 양쪽에서 동작.
+ * - 인증: 환경변수 `ANTHROPIC_API_KEY` (로컬·배포 공통).
+ *   OpenNext가 Cloudflare 시크릿을 process.env 로 주입한다.
  *
- * 2) 로컬 개인용: ANTHROPIC_API_KEY 가 없고 CLAUDE_CODE_OAUTH_TOKEN(구독 토큰)이
- *    있으면 Claude Agent SDK로 호출한다. (내 구독 사용량, 무료에 가까움)
- *
- * 우선순위는 "API 키 우선"이 아니라 "구독 토큰 우선"이다:
- * - 로컬(.env.local)에는 보통 구독 토큰만 있어 무료로 쓰고,
- * - 배포 환경에는 API 키만 넣어 종량으로 서비스한다.
+ * (구 Agent SDK/구독 토큰 경로는 workerd에서 동작하지 않아 제거함.)
  */
 import Anthropic from "@anthropic-ai/sdk";
 import type { SajuData } from "./saju";
 
-/** 배포 시 사용할 모델 (사용자 선택: Sonnet) */
-const API_MODEL = "claude-sonnet-5";
+const MODEL = "claude-sonnet-5";
 
 /** 사주 전문가 페르소나 및 출력 형식 지시 */
 const SYSTEM_PROMPT = `당신은 사주명리학에 정통한 따뜻하고 통찰력 있는 상담가입니다.
@@ -87,22 +82,36 @@ export function buildPrompt(saju: SajuData): string {
 
 /** 인증 수단 확인 (없으면 명확한 에러) */
 function assertAuth(): void {
-  if (!process.env.ANTHROPIC_API_KEY && !process.env.CLAUDE_CODE_OAUTH_TOKEN) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error(
-      "인증 정보가 없습니다. 배포 환경은 ANTHROPIC_API_KEY, 로컬은 CLAUDE_CODE_OAUTH_TOKEN 을 설정하세요."
+      "인증 정보가 없습니다. 환경변수 ANTHROPIC_API_KEY 를 설정하세요."
     );
   }
 }
 
-/** (배포) Anthropic API 직접 호출 — 서버리스에서 안정적 */
-async function* streamViaApi(prompt: string): AsyncGenerator<string> {
-  const client = new Anthropic(); // ANTHROPIC_API_KEY를 자동으로 읽음
+/**
+ * 사주 풀이를 스트리밍으로 생성한다. 텍스트 조각(delta)을 순차적으로 yield 한다.
+ */
+export async function* streamReading(saju: SajuData): AsyncGenerator<string> {
+  assertAuth();
+
+  // AI 호출을 미국 리전 고정 프록시(saju-ai-proxy)로 우회한다.
+  //   → Cloudflare 홍콩 엣지에서 실행돼도 Anthropic 아웃바운드는 미국에서 나가
+  //     지역차단(403 "Request not allowed")을 피한다.
+  //   AI_PROXY_URL 미설정(순수 next dev 등)이면 기본 엔드포인트를 그대로 쓴다.
+  //   apiKey 는 옵션 미지정 시 SDK가 process.env.ANTHROPIC_API_KEY 를 자동 사용.
+  const client = new Anthropic({
+    baseURL: process.env.AI_PROXY_URL || undefined,
+    defaultHeaders: process.env.AI_PROXY_SECRET
+      ? { "x-proxy-secret": process.env.AI_PROXY_SECRET }
+      : undefined,
+  });
   const stream = client.messages.stream({
-    model: API_MODEL,
+    model: MODEL,
     max_tokens: 8000,
     thinking: { type: "disabled" }, // 창작성 작업 — 추론 비용/지연 없이 빠르게
     system: SYSTEM_PROMPT,
-    messages: [{ role: "user", content: prompt }],
+    messages: [{ role: "user", content: buildPrompt(saju) }],
   });
 
   for await (const event of stream) {
@@ -112,49 +121,5 @@ async function* streamViaApi(prompt: string): AsyncGenerator<string> {
     ) {
       yield event.delta.text;
     }
-  }
-}
-
-/** (로컬) 구독 토큰 기반 Agent SDK 호출 — 배포 번들에서 제외되도록 동적 import */
-async function* streamViaAgentSdk(prompt: string): AsyncGenerator<string> {
-  const { query } = await import("@anthropic-ai/claude-agent-sdk");
-  const response = query({
-    prompt,
-    options: {
-      model: "sonnet",
-      systemPrompt: SYSTEM_PROMPT,
-      allowedTools: [],
-      permissionMode: "bypassPermissions",
-      includePartialMessages: true,
-    },
-  });
-
-  for await (const message of response) {
-    if (message.type === "stream_event") {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const event = (message as any).event;
-      if (
-        event?.type === "content_block_delta" &&
-        event?.delta?.type === "text_delta" &&
-        typeof event.delta.text === "string"
-      ) {
-        yield event.delta.text as string;
-      }
-    }
-  }
-}
-
-/**
- * 사주 풀이를 스트리밍으로 생성한다. 텍스트 조각(delta)을 순차적으로 yield 한다.
- * - 구독 토큰이 있으면 그것으로(로컬, 무료), 없으면 API 키로(배포, 종량) 호출.
- */
-export async function* streamReading(saju: SajuData): AsyncGenerator<string> {
-  assertAuth();
-  const prompt = buildPrompt(saju);
-
-  if (process.env.CLAUDE_CODE_OAUTH_TOKEN) {
-    yield* streamViaAgentSdk(prompt);
-  } else {
-    yield* streamViaApi(prompt);
   }
 }
