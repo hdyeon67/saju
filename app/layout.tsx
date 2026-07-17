@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "사주 풀이",
     description: "생년월일로 사주팔자를 계산하고 풀이해 드립니다.",
-    images: ["/logo.png"],
+    images: ["/api/og"],
     type: "website",
   },
 };
