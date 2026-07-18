@@ -45,6 +45,15 @@ export const PROMOS: PromoApp[] = [
     anchorCopy: "좋은 날을 미리 잡고 싶다면",
     anchorDesc: "좋은날 · 이사·결혼 택일 추천",
   },
+  {
+    // 맥락 앵커 없이 하단 "다른 서비스" 패밀리 줄에만 노출 (사주 풀이 섹션과 매칭되는 맥락 없음)
+    id: "shinjo",
+    name: "신조어 판독기",
+    tag: "언어나이",
+    emoji: "🗣️",
+    color: "#a24bff",
+    href: "https://shinjo.fineboll.com",
+  },
 ];
 
 /** 풀이 섹션 제목에 맞는 맥락형 추천 앱을 찾는다 (섹션당 최대 1개) */
