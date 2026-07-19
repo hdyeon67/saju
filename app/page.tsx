@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { AdFit } from "@/components/adfit";
 import { CrossPromo, InlinePromo } from "@/components/cross-promo";
 import { promoForSection } from "@/lib/config/promos";
+import { track, referrerType } from "@/lib/analytics";
 import {
   Card,
   CardContent,
@@ -108,6 +109,24 @@ export default function Home() {
     return () => window.removeEventListener("popstate", onPop);
   }, []);
 
+  // 랜딩 진입 계측 (유입 유형만, 개인정보 미전송)
+  useEffect(() => {
+    track("landing_view", { referrer_type: referrerType() });
+  }, []);
+
+  // 결과(풀이) 완료 시 result_view 1회 계측. 재입력 시 다시 발화.
+  const resultFired = useRef(false);
+  useEffect(() => {
+    if (stage === "input") {
+      resultFired.current = false;
+      return;
+    }
+    if (stage === "result" && saju && reading && !loading && !resultFired.current) {
+      resultFired.current = true;
+      track("result_view", { category: "saju" });
+    }
+  }, [stage, saju, reading, loading]);
+
   // 외부(케미체크 등)에서 ?y=&m=&d=&cal= 로 들어오면 생년월일 프리필
   // (성별·태어난 시각은 사용자가 확인 후 계산)
   useEffect(() => {
@@ -124,6 +143,8 @@ export default function Home() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // 비식별 속성만 전송 — 생년월일·성별·시각 등 입력값은 절대 전송하지 않음
+    track("input_submit", { category: "saju", calendar, time_known: !unknownTime });
     // 결과 화면으로 전환 + 뒤로가기용 히스토리 추가
     setStage("result");
     window.history.pushState({ stage: "result" }, "");
@@ -906,6 +927,7 @@ function ShareBar({
   }
 
   async function handleSave() {
+    track("share_click", { channel: "png" });
     setBusy(true);
     try {
       const blob = await makeImage();
@@ -924,6 +946,7 @@ function ShareBar({
   }
 
   async function handleShare() {
+    track("share_click", { channel: "share" });
     setBusy(true);
     try {
       const blob = await makeImage();
@@ -951,6 +974,7 @@ function ShareBar({
   }
 
   async function handleCopyLink() {
+    track("share_click", { channel: "link" });
     try {
       await navigator.clipboard.writeText(location.origin);
       setCopied(true);
@@ -961,6 +985,7 @@ function ShareBar({
   }
 
   function handleX() {
+    track("share_click", { channel: "x" });
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
       shareText
     )}&url=${encodeURIComponent(location.origin)}`;

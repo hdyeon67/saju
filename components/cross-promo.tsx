@@ -1,4 +1,7 @@
+"use client";
+
 import { PROMOS, type PromoApp } from "@/lib/config/promos";
+import { track } from "@/lib/analytics";
 
 /**
  * 맥락형 추천 — 풀이의 특정 섹션(예: "연애와 궁합") 바로 뒤에 자연스럽게 삽입.
@@ -11,6 +14,7 @@ export function InlinePromo({ promo }: { promo: PromoApp }) {
       target="_blank"
       rel="noopener noreferrer"
       data-noimg="1"
+      onClick={() => track("cross_banner_click", { target_app: promo.id })}
       className="flex items-center gap-3 rounded-lg border bg-muted/40 px-3 py-2.5 transition hover:bg-muted"
     >
       <span
@@ -47,6 +51,7 @@ export function CrossPromo() {
             href={p.href}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => track("cross_banner_click", { target_app: p.id })}
             className="bg-card flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-center transition hover:bg-muted"
           >
             <span

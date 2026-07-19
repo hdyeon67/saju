@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Nanum_Myeongjo, Gowun_Dodum } from "next/font/google";
 import "./globals.css";
 import { Footer } from "@/components/footer";
+import { AnalyticsProvider } from "@/components/analytics-provider";
 
 // 제목·강조용 명조체 (전통 서예 느낌)
 const myeongjo = Nanum_Myeongjo({
@@ -45,6 +46,7 @@ export default function RootLayout({
       className={`${myeongjo.variable} ${gowun.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <AnalyticsProvider />
         {children}
         <Footer
           links={[{ label: "개인정보처리방침", href: "/privacy" }]}
